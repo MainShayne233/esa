@@ -64,9 +64,10 @@ defmodule ESA.Parse do
           ]}
        )
        when is_function_header(function_header) do
+
     %Function{
       name: function_name,
-      arity: safe_arguments_count(arguments),
+      argument_names: parse_argument_names(arguments),
       public: [def: true, defp: false][function_header],
       line_number: line_number
     }
@@ -77,7 +78,18 @@ defmodule ESA.Parse do
     :ignore
   end
 
-  @spec safe_arguments_count(list() | nil) :: integer
-  defp safe_arguments_count(arguments) when is_list(arguments), do: Enum.count(arguments)
-  defp safe_arguments_count(nil), do: 0
+  @spec parse_argument_names(list) :: [atom()]
+  defp parse_argument_names(list) when is_list(list) do
+    Enum.map(list, fn
+      {name, _, nil} ->
+        name
+
+      name ->
+        name
+    end)
+  end
+
+  defp parse_argument_names(nil) do
+    []
+  end
 end

@@ -27,7 +27,7 @@ defmodule ESA.ParseTest do
              ] = module.functions
 
       assert first_function == %ESA.Function{
-               arity: 0,
+               argument_names: [],
                line_number: 15,
                name: :hello,
                public: true,
@@ -35,7 +35,7 @@ defmodule ESA.ParseTest do
              }
 
       assert second_function == %ESA.Function{
-               arity: 2,
+               argument_names: [:x, :y],
                line_number: 20,
                name: :this_function_has_a_typespec,
                public: true,
@@ -43,7 +43,7 @@ defmodule ESA.ParseTest do
              }
 
       assert third_function == %ESA.Function{
-               arity: 2,
+               argument_names: [:x, :y],
                line_number: 24,
                name: :this_function_does_not_have_a_typespec,
                public: true,
@@ -51,7 +51,7 @@ defmodule ESA.ParseTest do
              }
 
       assert fourth_function == %ESA.Function{
-               arity: 2,
+               argument_names: [:apple, :banana],
                line_number: 28,
                name: :private_function,
                public: false,
