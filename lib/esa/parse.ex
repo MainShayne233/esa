@@ -6,35 +6,37 @@ defmodule ESA.Parse do
   alias ESA.Module
   alias ESA.Function
 
-  @type raw_module :: {:defmodule, keyword(), list()}
+  @type quoted_module :: any()
 
   @function_headers [:def, :defp]
 
+  defguardp is_function_header(possible_function_header)
+            when possible_function_header in @function_headers
+
   @doc """
-  Should return a parsed module for the given file.
+  Takes a string version of a module and returns a Module.t()
   """
-  @spec parse_file(file_path :: String.t()) :: {:ok, Module.t()} | {:error, atom()}
-  def parse_file(file_path) when is_binary(file_path) do
-    with {:ok, file} <- File.read(file_path),
-         {:ok, raw_module} <- Code.string_to_quoted(file) do
-      parse_raw_module(raw_module)
+  @spec module_from_string(string_module :: String.t(), file_name :: String.t()) ::
+          {:ok, Module.t()} | {:error, atom()}
+  def module_from_string(string_module, file_name)
+      when is_binary(string_module) and is_binary(file_name) do
+    with {:ok, quoted_module} <- Code.string_to_quoted(string_module) do
+      module_from_quoted(quoted_module, file_name)
     end
   end
 
   @doc """
-  Should parse the raw tuple module
+  Takes a quoted module and returns a Module.t()
   """
-  @spec parse_raw_module(raw_module()) :: {:ok, Module.t()} | {:error, atom()}
-  def parse_raw_module(
+  @spec module_from_quoted(quoted_module(), String.t()) :: {:ok, Module.t()} | {:error, atom()}
+  def module_from_quoted(
         {:defmodule, [line: line_number],
-         [{:__aliases__, [line: line_number], module_name}, [do: {:__block__, [], body}]]}
+         [{:__aliases__, [line: line_number], module_name}, [do: {:__block__, [], body}]]},
+        file_name
       ) do
-    %Module{name: module_name, line_number: 1}
+    %Module{name: module_name, line_number: 1, file_name: file_name}
     |> process_body(body)
   end
-
-  @spec return(any()) :: {:ok, any()}
-  defp return(value), do: {:ok, value}
 
   defp process_body(module, []) do
     %Module{module | functions: Enum.reverse(module.functions)}
@@ -52,9 +54,6 @@ defmodule ESA.Parse do
     end
   end
 
-  defguardp is_function_header(possible_function_header)
-            when possible_function_header in @function_headers
-
   @spec process_entry(any()) :: {:ok, Function.t()} | :ignore
   defp process_entry(
          {function_header, [line: line_number],
@@ -64,7 +63,6 @@ defmodule ESA.Parse do
           ]}
        )
        when is_function_header(function_header) do
-
     %Function{
       name: function_name,
       argument_names: parse_argument_names(arguments),
@@ -92,4 +90,7 @@ defmodule ESA.Parse do
   defp parse_argument_names(nil) do
     []
   end
+
+  @spec return(any()) :: {:ok, any()}
+  defp return(value), do: {:ok, value}
 end

@@ -17,5 +17,6 @@ defmodule ESA.Module do
     field(:functions, [Function.t()], default: [])
     field(:typespecs, [Typespec.t()], default: [])
     field(:line_number, integer(), enforce: true)
+    field(:file_name, String.t(), enforce: true)
   end
 end
