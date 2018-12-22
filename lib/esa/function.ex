@@ -5,8 +5,6 @@ defmodule ESA.Function do
 
   use TypedStruct
 
-  alias ESA.Typespec
-
   @typedoc """
   A struct representing an Elixir function.
   """

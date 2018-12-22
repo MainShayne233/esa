@@ -45,11 +45,13 @@ defmodule ESA.ParseTest do
       assert is_list(module.typespecs)
     end
 
-    test "should properly parse public functions that are @doc'd and @spec'd, guard clause'd, and have default args", %{
-      module_string: module_string,
-      file_name: file_name
-    } do
-      assert {:ok, %Module{functions: [%Function{} = first_function | _]}} = Parse.module_from_string(module_string, file_name)
+    test "should properly parse public functions that are @doc'd and @spec'd, guard clause'd, and have default args",
+         %{
+           module_string: module_string,
+           file_name: file_name
+         } do
+      assert {:ok, %Module{functions: [%Function{} = first_function | _]}} =
+               Parse.module_from_string(module_string, file_name)
 
       assert first_function.name == :add
       assert first_function.public == true

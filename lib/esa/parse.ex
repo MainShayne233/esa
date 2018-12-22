@@ -5,7 +5,6 @@ defmodule ESA.Parse do
 
   alias ESA.Module
   alias ESA.Function
-  alias ESA.Util.EnumUtil
 
   @type quoted_module :: any()
 
@@ -88,16 +87,16 @@ defmodule ESA.Parse do
   end
 
   defp process_function_content(
-    %Function{} = function,
-    [do: _function_body]
-  ) do
+         %Function{} = function,
+         do: _function_body
+       ) do
     {:ok, function}
   end
 
   @spec process_function_arguments_content(Function.t(), list()) ::
           {:ok, Function.t()} | {:error, atom()}
   defp process_function_arguments_content(%Function{} = function, [
-         {function_name, [line: line_number], arguments_contents} | _guard_clauses
+         {function_name, [line: _line_number], arguments_contents} | _guard_clauses
        ]) do
     %Function{function | name: function_name}
     |> process_arguments_contents(arguments_contents)
@@ -105,9 +104,7 @@ defmodule ESA.Parse do
 
   @spec process_arguments_contents(Function.t(), list()) :: {:ok, Function.t()} | {:error, atom()}
   defp process_arguments_contents(%Function{} = function, []) do
-    {:ok, %Function{function |
-        arguments: Enum.reverse(function.arguments)
-     }}
+    {:ok, %Function{function | arguments: Enum.reverse(function.arguments)}}
   end
 
   defp process_arguments_contents(%Function{} = function, [argument_content | rest]) do
@@ -118,7 +115,10 @@ defmodule ESA.Parse do
   end
 
   @spec process_arguments_content(Function.t(), any()) :: {:ok, Function.t()} | {:error, atom()}
-  defp process_arguments_content(%Function{} = function, {:\\, _line_number, [{argument_name, _line_number, _}, _default_arg]}) do
+  defp process_arguments_content(
+         %Function{} = function,
+         {:\\, line_number, [{argument_name, line_number, _}, _default_arg]}
+       ) do
     %Function{function | arguments: [argument_name | function.arguments]}
     |> return()
   end
@@ -128,9 +128,9 @@ defmodule ESA.Parse do
     |> return()
   end
 
-#  defp process_arguments_content(%Function{} = function, argument_content) do
-#    IO.inspect(argument_content)
-#  end
+  #  defp process_arguments_content(%Function{} = function, argument_content) do
+  #    IO.inspect(argument_content)
+  #  end
 
   @spec return(any()) :: {:ok, any()}
   defp return(value), do: {:ok, value}
