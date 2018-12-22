@@ -2,7 +2,7 @@
 
 This is:
 
-- First a foremost, a learning project.
+- First and foremost, a learning project.
 - Second, a hopefully useful tool for statically analyzing Elixir source code.
   - Parsing, `@doc`/`@spec` checking, maybe type checking???
 - Complete divergence from tools like [credo](https://github.com/rrrene/credo) and [dialyxer](https://github.com/jeremyjh/dialyxir).
