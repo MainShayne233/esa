@@ -5,6 +5,7 @@ defmodule ESA.Parse do
 
   alias ESA.Module
   alias ESA.Function
+  alias ESA.Util.EnumUtil
 
   @type quoted_module :: any()
 
@@ -55,41 +56,81 @@ defmodule ESA.Parse do
   end
 
   @spec process_entry(any()) :: {:ok, Function.t()} | :ignore
-  defp process_entry(
-         {function_header, [line: line_number],
-          [
-            {function_name, [line: line_number], arguments},
-            [do: _body]
-          ]}
-       )
+  defp process_entry({function_header, [line: line_number], function_contents})
        when is_function_header(function_header) do
     %Function{
-      name: function_name,
-      argument_names: parse_argument_names(arguments),
-      public: [def: true, defp: false][function_header],
-      line_number: line_number
+      line_number: line_number,
+      public: function_header == :def
     }
-    |> return()
+    |> process_function_contents(function_contents)
   end
 
   defp process_entry(_unsupported_entry) do
     :ignore
   end
 
-  @spec parse_argument_names(list) :: [atom()]
-  defp parse_argument_names(list) when is_list(list) do
-    Enum.map(list, fn
-      {name, _, nil} ->
-        name
+  @spec process_function_contents(Function.t(), list()) :: {:ok, Function.t()} | {:error, atom()}
+  defp process_function_contents(%Function{} = function, []), do: {:ok, function}
 
-      name ->
-        name
-    end)
+  defp process_function_contents(%Function{} = function, [function_content | rest]) do
+    with {:ok, %Function{} = updated_function} <-
+           process_function_content(function, function_content) do
+      process_function_contents(updated_function, rest)
+    end
   end
 
-  defp parse_argument_names(nil) do
-    []
+  @spec process_function_content(Function.t(), any()) :: {:ok, Function.t()} | {:error, atom()}
+  defp process_function_content(
+         %Function{} = function,
+         {:when, [line: 4], function_arguments_content}
+       ) do
+    process_function_arguments_content(function, function_arguments_content)
   end
+
+  defp process_function_content(
+    %Function{} = function,
+    [do: _function_body]
+  ) do
+    {:ok, function}
+  end
+
+  @spec process_function_arguments_content(Function.t(), list()) ::
+          {:ok, Function.t()} | {:error, atom()}
+  defp process_function_arguments_content(%Function{} = function, [
+         {function_name, [line: line_number], arguments_contents} | _guard_clauses
+       ]) do
+    %Function{function | name: function_name}
+    |> process_arguments_contents(arguments_contents)
+  end
+
+  @spec process_arguments_contents(Function.t(), list()) :: {:ok, Function.t()} | {:error, atom()}
+  defp process_arguments_contents(%Function{} = function, []) do
+    {:ok, %Function{function |
+        arguments: Enum.reverse(function.arguments)
+     }}
+  end
+
+  defp process_arguments_contents(%Function{} = function, [argument_content | rest]) do
+    with {:ok, %Function{} = updated_function} <-
+           process_arguments_content(function, argument_content) do
+      process_arguments_contents(updated_function, rest)
+    end
+  end
+
+  @spec process_arguments_content(Function.t(), any()) :: {:ok, Function.t()} | {:error, atom()}
+  defp process_arguments_content(%Function{} = function, {:\\, _line_number, [{argument_name, _line_number, _}, _default_arg]}) do
+    %Function{function | arguments: [argument_name | function.arguments]}
+    |> return()
+  end
+
+  defp process_arguments_content(%Function{} = function, {argument_name, _line_number, _}) do
+    %Function{function | arguments: [argument_name | function.arguments]}
+    |> return()
+  end
+
+#  defp process_arguments_content(%Function{} = function, argument_content) do
+#    IO.inspect(argument_content)
+#  end
 
   @spec return(any()) :: {:ok, any()}
   defp return(value), do: {:ok, value}

@@ -12,10 +12,9 @@ defmodule ESA.Function do
   """
 
   typedstruct do
-    field(:name, atom(), enforce: true)
-    field(:argument_names, [atom()], default: [])
-    field(:public, boolean(), enforce: true)
-    field(:typespec, Typespec.maybe_typespec(), default: Typespec.none())
-    field(:line_number, integer(), enforce: true)
+    field(:name, atom())
+    field(:arguments, [atom()], default: [])
+    field(:public, boolean())
+    field(:line_number, integer())
   end
 end

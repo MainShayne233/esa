@@ -1,7 +1,7 @@
 defmodule ESA.ParseTest do
   use ExUnit.Case
 
-  alias ESA.{Function, Module, Parse, Typespec}
+  alias ESA.{Function, Module, Parse}
 
   setup do
     module_string =
@@ -14,7 +14,7 @@ defmodule ESA.ParseTest do
           @doc """
           Adds two numbers together.
           """
-          def add(x, y) when is_number(x) and is_number(y) do
+          def add(x, y \\ 1) when is_number(x) and is_number(y) do
             x + y
           end
         end
@@ -44,59 +44,17 @@ defmodule ESA.ParseTest do
 
       assert is_list(module.typespecs)
     end
+
+    test "should properly parse public functions that are @doc'd and @spec'd, guard clause'd, and have default args", %{
+      module_string: module_string,
+      file_name: file_name
+    } do
+      assert {:ok, %Module{functions: [%Function{} = first_function | _]}} = Parse.module_from_string(module_string, file_name)
+
+      assert first_function.name == :add
+      assert first_function.public == true
+      assert [:x, :y] = first_function.arguments
+      assert first_function.line_number == 4
+    end
   end
-
-  # describe "parse_file/1" do
-  #  test "should properly parse the file", %{sample_elixir_file_path: file_path} do
-  #    {:ok, %Module{} = module} = Parse.parse_file(file_path)
-
-  #    assert module.name == [:SampleProject]
-
-  #    assert module.line_number == 1
-
-  #    assert [
-  #             %Function{} = first_function,
-  #             %Function{} = second_function,
-  #             %Function{} = third_function,
-  #             %Function{} = fourth_function
-  #           ] = module.functions
-
-  #    assert first_function == %ESA.Function{
-  #             argument_names: [],
-  #             line_number: 15,
-  #             name: :hello,
-  #             public: true,
-  #             typespec: Typespec.none()
-  #           }
-
-  #    assert second_function == %ESA.Function{
-  #             argument_names: [:x, :y],
-  #             line_number: 20,
-  #             name: :this_function_has_a_typespec,
-  #             public: true,
-  #             typespec: Typespec.none()
-  #           }
-
-  #    assert third_function == %ESA.Function{
-  #             argument_names: [:x, :y],
-  #             line_number: 24,
-  #             name: :this_function_does_not_have_a_typespec,
-  #             public: true,
-  #             typespec: Typespec.none()
-  #           }
-
-  #    assert fourth_function == %ESA.Function{
-  #             argument_names: [:apple, :banana],
-  #             line_number: 28,
-  #             name: :private_function,
-  #             public: false,
-  #             typespec: Typespec.none()
-  #           }
-  #  end
-
-  #  test "should handle nested module names", %{nested_module_elixir_file_path: file_path} do
-  #    {:ok, %Module{} = module} = Parse.parse_file(file_path)
-  #    assert module.name == [:SampleProject, :Data]
-  #  end
-  # end
 end
