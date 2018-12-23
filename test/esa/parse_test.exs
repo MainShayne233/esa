@@ -54,8 +54,11 @@ defmodule ESA.ParseTest do
                Parse.module_from_string(module_string, file_name)
 
       assert first_function.name == :add
+
       assert first_function.public == true
-      assert [:x, :y] = first_function.arguments
+
+      assert first_function.arguments == [:x, :y]
+
       assert first_function.line_number == 4
     end
   end
